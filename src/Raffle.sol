@@ -27,11 +27,11 @@ contract Raffle is VRFConsumerBaseV2Plus {
      */
     uint256 private immutable i_entranceFee;
     uint256 private immutable i_interval;
-    uint256 private immutable i_lastTimeStamp;
     bytes32 private immutable i_keyHash; // Gas Price Limit. Functions as an ID for the offchain VRF job
     uint256 private immutable i_subscriptionId;
     uint32 private immutable i_callbackGasLimit;
 
+    uint256 private s_lastTimeStamp;
     address payable private s_winner;
     address payable[] private s_players;
     RaffleState private s_raffleState;
@@ -39,8 +39,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
     error Raffle_NotEnoughEthSent();
     error Raffle_TransferFailed();
     error Raffle_StateNotOpen();
+    error Raffle_UpkeepNotNeeded(uint256 raffleState);
 
     event EnteredRaffle(address indexed player);
+    event WinnerPicked(address indexed player);
 
     constructor(
         uint256 entranceFee,
@@ -52,7 +54,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
-        i_lastTimeStamp = block.timestamp;
+        s_lastTimeStamp = block.timestamp;
         i_keyHash = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
@@ -72,9 +74,40 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit EnteredRaffle(msg.sender);
     }
 
-    function pickWinner() external {
-        if (block.timestamp - i_lastTimeStamp >= i_interval) {
+    /**
+     * @dev Function the Chainlink Keeper nodes call
+     * When `upkeepNeeded` returns True it'll invoke the performUpkeep callback
+     * The following should be true for this to return true:
+     * 1. The time interval has passed between raffle runs.
+     * 2. The lottery is open.
+     * 3. The contract has ETH.
+     * 4. There are players registered.
+     * 5. Implicitly, your subscription is funded with LINK.
+     */
+    function checkUpkeep(bytes memory /* checkData */ )
+        public
+        view
+        returns (bool upkeepNeeded, bytes memory /* performData */ )
+    {
+        if ((block.timestamp - s_lastTimeStamp) < i_interval) {
             revert();
+        }
+
+        bool hasTimePassed = (block.timestamp - s_lastTimeStamp) >= i_interval;
+        bool hasETH = address(this).balance > 0;
+        bool isOpen = s_raffleState == RaffleState.OPEN;
+        bool hasPlayers = s_players.length > 0;
+        upkeepNeeded = hasTimePassed && hasETH && isOpen && hasPlayers;
+        return (upkeepNeeded, hex"");
+    }
+
+    function performUpkeep(bytes calldata /* performData */ ) external {
+        // if (block.timestamp - s_lastTimeStamp >= i_interval) {
+        //     revert();
+        // }
+        (bool upkeepNeeded,) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle_UpkeepNotNeeded(uint256(s_raffleState));
         }
 
         s_raffleState = RaffleState.CALCULATING;
@@ -96,7 +129,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
             )
         });
 
-        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
+        s_vrfCoordinator.requestRandomWords(request);
     }
 
     function getEntranceFee() public view returns (uint256) {
@@ -108,8 +141,14 @@ contract Raffle is VRFConsumerBaseV2Plus {
         uint256 winnerIndex = randomWords[0] % s_players.length;
         address payable winner = s_players[winnerIndex];
         s_winner = winner;
+
         s_raffleState = RaffleState.OPEN;
+        s_players = new address payable[](0);
+        s_lastTimeStamp = block.timestamp;
+        emit WinnerPicked(s_winner);
+
         (bool success,) = s_winner.call{value: address(this).balance}("");
+
         if (!success) {
             revert Raffle_TransferFailed();
         }
