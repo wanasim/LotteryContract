@@ -61,7 +61,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_raffleState = RaffleState.OPEN;
     }
 
-    function enterRaflle() external payable {
+    function enterRaffle() external payable {
         // require(msg.value >= i_entranceFee, "Not enough ETH");
         if (msg.value < i_entranceFee) {
             revert Raffle_NotEnoughEthSent();
@@ -136,7 +136,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return i_entranceFee;
     }
 
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+    function fulfillRandomWords(uint256, /* requestId */ uint256[] calldata randomWords) internal override {
         // Pick Winner
         uint256 winnerIndex = randomWords[0] % s_players.length;
         address payable winner = s_players[winnerIndex];
@@ -152,5 +152,21 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if (!success) {
             revert Raffle_TransferFailed();
         }
+    }
+
+    function getRaffleState() external view returns (RaffleState) {
+        return s_raffleState;
+    }
+
+    function getPlayers(uint256 index) external view returns (address) {
+        // address matchedPlayer;
+        // for (uint256 i = 0; i < s_players.length; i++) {
+        //     if (s_players[i] == player) {
+        //         matchedPlayer = s_players[i];
+        //     }
+        // }
+
+        // return matchedPlayer;
+        return s_players[index];
     }
 }
