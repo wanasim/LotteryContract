@@ -53,3 +53,9 @@ Diagram Flow
 #### Funding Subscription
 
 - forge script script/Interactions.s.sol:FundSubscription --rpc-url $SEPOLIA_URL --account myaccount --broadcast
+
+### Coverage
+
+- forge coverage
+
+- forge coverage --report debug > coverage.txt

@@ -4,4 +4,8 @@ out = "out"
 libs = ["lib"]
 # fs_permissions = 
 
+# used for fuzz testing - passing arbitrary values to try and break test
+[fuzz]
+runs = 256
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
