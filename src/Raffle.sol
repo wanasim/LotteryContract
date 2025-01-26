@@ -44,6 +44,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     event EnteredRaffle(address indexed player);
     event WinnerPicked(address indexed player);
+    event RequestedRaffleWinner(uint256 requestId);
 
     constructor(
         uint256 entranceFee,
@@ -131,7 +132,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
             )
         });
 
-        s_vrfCoordinator.requestRandomWords(request);
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
+        console.log("REQUEST!!LKSVDFSD#@$@$", requestId);
+        emit RequestedRaffleWinner(requestId);
     }
 
     function getEntranceFee() public view returns (uint256) {
@@ -160,6 +163,10 @@ contract Raffle is VRFConsumerBaseV2Plus {
         return s_raffleState;
     }
 
+    function getTimestamp() external view returns (uint256) {
+        return s_lastTimeStamp;
+    }
+
     function getPlayers(uint256 index) external view returns (address) {
         // address matchedPlayer;
         // for (uint256 i = 0; i < s_players.length; i++) {
@@ -170,5 +177,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
         // return matchedPlayer;
         return s_players[index];
+    }
+
+    function getRecentWinner() external view returns (address) {
+        return s_winner;
     }
 }

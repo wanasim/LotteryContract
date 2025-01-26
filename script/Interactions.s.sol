@@ -32,7 +32,7 @@ contract CreateSubscription is Script {
 }
 
 contract FundSubscription is Script, CodeConstants {
-    uint256 public constant FUND_AMOUNT = 0.1 ether; // aka LINK
+    uint256 public constant FUND_AMOUNT = 1 ether; // aka LINK
 
     function run() external {
         fundSubscriptionUsingConfig();
@@ -54,7 +54,7 @@ contract FundSubscription is Script, CodeConstants {
 
         if (block.chainid == LOCAL_CHAIN_ID) {
             vm.startBroadcast();
-            VRFCoordinatorV2_5Mock(vrfCoordinator).fundSubscription(subId, FUND_AMOUNT); // FUND_AMOUNT really represents LINK here. so .1 LINK
+            VRFCoordinatorV2_5Mock(vrfCoordinator).fundSubscription(subId, FUND_AMOUNT * 100); // FUND_AMOUNT really represents LINK here. so .1 LINK
             vm.stopBroadcast();
         } else {
             console.log("BALANCE!@#", address(this).balance);
