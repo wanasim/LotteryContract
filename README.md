@@ -4,6 +4,13 @@
 
 This code is to create a proveably random smart contract lottery.
 
+Lottery Contract (VRF Consumer) is deployed on Sepolia testnet: 0x6Cf72494550605Da051D612e10FEbdF488981Ba3
+
+VRF Subscription Address: 0xbab69b1303fd3121285d7b9e1b8205680ec832a7
+
+Upkeep Address:
+0x6Cf72494550605Da051D612e10FEbdF488981Ba3
+
 ## Functionality
 
 1. Users can enter the raffle by paying for a ticket. The ticket fees are for the prize the winner.
@@ -59,3 +66,12 @@ Diagram Flow
 - forge coverage
 
 - forge coverage --report debug > coverage.txt
+
+## Deploy
+
+### Sepolia Testnet
+
+1. Option1: Use forge script
+   forge script DeployRaffle --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) -vvvv
+
+2. Option1: Use Makefile
